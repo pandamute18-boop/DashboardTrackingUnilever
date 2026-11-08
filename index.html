@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f5f0">
+  <title>Sunsilk | Dashboard Performa</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202821;
+      --muted: #748078;
+      --paper: #f3f5f0;
+      --surface: #fff;
+      --line: #e4e9e2;
+      --green: #16764d;
+      --green-soft: #e5f3e9;
+      --orange: #e58b39;
+      --red: #c95258;
+      --blue: #477a9f;
+      --shadow: 0 8px 26px rgb(34 53 39 / 5%);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: "DM Sans", sans-serif; }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .topbar { background: #183b2c; color: white; }
+    .topbar-inner { max-width: 1440px; min-height: 76px; margin: auto; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .brand { display: flex; align-items: center; gap: 13px; }
+    .brand-mark { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; background: #d7ed54; color: #183b2c; font: 700 20px "Space Grotesk", sans-serif; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font: 600 19px "Space Grotesk", sans-serif; letter-spacing: 0; }
+    .eyebrow { margin-top: 3px; color: #b6c8bc; font-size: 11px; }
+    .top-actions { display: flex; align-items: center; gap: 12px; }
+    .status { display: inline-flex; align-items: center; gap: 7px; color: #d8e6dc; font-size: 12px; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #e8b15c; }
+    .status[data-state="connected"] .status-dot { background: #a7db75; }
+    .status[data-state="sample"] .status-dot, .status[data-state="error"] .status-dot { background: #f1b85e; }
+    .refresh { border: 1px solid #547060; border-radius: 7px; padding: 9px 13px; background: #244b38; color: white; font-size: 12px; font-weight: 600; }
+    .refresh:hover { background: #315d46; }
+    main { max-width: 1440px; margin: auto; padding: 28px; }
+    .page-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    .page-heading h2 { font: 600 24px "Space Grotesk", sans-serif; }
+    .page-heading p { margin-top: 5px; color: var(--muted); font-size: 13px; }
+    .updated { color: var(--muted); font-size: 11px; white-space: nowrap; }
+    .panel { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); box-shadow: var(--shadow); }
+    .filters { padding: 17px 19px 19px; margin-bottom: 16px; }
+    .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .section-heading h3 { font: 600 13px "Space Grotesk", sans-serif; }
+    .text-button { padding: 3px 0; border: 0; background: transparent; color: var(--green); font-size: 12px; font-weight: 700; }
+    .filter-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .field label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 11px; font-weight: 700; }
+    .field select, .search { width: 100%; min-height: 38px; border: 1px solid #dce3db; border-radius: 6px; padding: 8px 10px; background: white; color: var(--ink); font-size: 12px; outline: none; }
+    .field select:focus, .search:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgb(22 118 77 / 11%); }
+    .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 16px; }
+    .kpi { min-height: 116px; padding: 17px 18px; position: relative; overflow: hidden; }
+    .kpi::after { content: ""; position: absolute; right: -17px; bottom: -30px; width: 86px; height: 86px; border-radius: 50%; background: var(--wash, #edf5ee); }
+    .kpi-label { color: var(--muted); font-size: 11px; font-weight: 600; }
+    .kpi-value { margin-top: 10px; font: 600 26px "Space Grotesk", sans-serif; letter-spacing: 0; }
+    .kpi-value small { color: var(--muted); font: 500 12px "DM Sans", sans-serif; }
+    .charts, .rankings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 16px; }
+    .chart-panel { padding: 18px; min-width: 0; }
+    .chart-panel h3, .table-panel h3 { font: 600 14px "Space Grotesk", sans-serif; }
+    .chart-panel p { margin-top: 4px; color: var(--muted); font-size: 11px; }
+    .chart-wrap { height: 250px; margin-top: 13px; }
+    .rank-panel { padding: 18px; min-width: 0; }
+    .rank-title { display: flex; align-items: center; gap: 8px; margin-bottom: 13px; font: 600 13px "Space Grotesk", sans-serif; }
+    .rank-title.top { color: var(--green); }
+    .rank-title.bottom { color: var(--red); }
+    .table-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 11px; }
+    th { padding: 9px 8px; background: #f2f6f1; color: #58655c; font-size: 10px; font-weight: 700; white-space: nowrap; }
+    td { padding: 9px 8px; border-bottom: 1px solid #edf0ec; white-space: nowrap; }
+    tbody tr:hover { background: #f8faf7; }
+    .right { text-align: right; }
+    .table-panel { padding: 18px; }
+    .table-tools { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+    .search { max-width: 270px; }
+    .data-table { min-width: 950px; }
+    .data-table th { background: #183b2c; color: white; }
+    .badge { display: inline-block; border-radius: 4px; padding: 3px 7px; font-size: 10px; font-weight: 700; }
+    .badge.yes { background: var(--green-soft); color: #17613f; }
+    .badge.no { background: #fce9e8; color: #a43e43; }
+    .badge.competitor { background: #e8f0f6; color: #426c89; }
+    .pagination { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 13px; color: var(--muted); font-size: 11px; }
+    .page-buttons { display: flex; gap: 6px; }
+    .page-buttons button { min-width: 34px; min-height: 31px; border: 1px solid var(--line); border-radius: 5px; background: white; color: var(--ink); }
+    .page-buttons button:disabled { cursor: default; opacity: .42; }
+    .empty { padding: 20px 8px; color: var(--muted); text-align: center; }
+    footer { padding: 18px 28px 30px; color: #89938b; text-align: center; font-size: 10px; }
+    @media (max-width: 850px) {
+      main { padding: 22px 18px; }
+      .filter-grid, .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .charts, .rankings { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .topbar-inner { min-height: auto; align-items: flex-start; padding: 14px 16px; flex-direction: column; }
+      .top-actions { width: 100%; justify-content: space-between; }
+      main { padding: 20px 13px; }
+      .page-heading { align-items: flex-start; flex-direction: column; }
+      .page-heading h2 { font-size: 21px; }
+      .filter-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .kpis { gap: 9px; }
+      .kpi { min-height: 104px; padding: 13px; }
+      .kpi-value { font-size: 22px; }
+      .chart-panel, .rank-panel, .table-panel { padding: 14px; }
+      .chart-wrap { height: 225px; }
+      .table-tools { align-items: stretch; flex-direction: column; }
+      .search { max-width: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">S</div>
+        <div><h1>Sunsilk Performance</h1><p class="eyebrow">Dashboard penjualan & ketersediaan</p></div>
+      </div>
+      <div class="top-actions">
+        <span id="dataStatus" class="status" data-state="loading" role="status"><span class="status-dot"></span><span>Memuat data...</span></span>
+        <button id="refreshButton" class="refresh" type="button">↻ &nbsp;Refresh data</button>
+      </div>
+    </div>
+  </header>
+  <main>
+    <div class="page-heading">
+      <div><h2>Ringkasan performa</h2><p>Pantau ketersediaan, penjualan, dan harga per area distribusi.</p></div>
+      <span id="lastUpdated" class="updated">Belum diperbarui</span>
+    </div>
+
+    <section class="panel filters" aria-labelledby="filterHeading">
+      <div class="section-heading"><h3 id="filterHeading">Filter data</h3><button id="resetButton" type="button" class="text-button">Reset filter</button></div>
+      <div class="filter-grid">
+        <div class="field"><label for="filterBpArea">BP Area</label><select id="filterBpArea"><option value="">Semua area</option></select></div>
+        <div class="field"><label for="filterDistributor">Distributor (DT)</label><select id="filterDistributor"><option value="">Semua distributor</option></select></div>
+        <div class="field"><label for="filterToko">Toko</label><select id="filterToko"><option value="">Semua toko</option></select></div>
+        <div class="field"><label for="filterUsername">Username BA / BW</label><select id="filterUsername"><option value="">Semua username</option></select></div>
+      </div>
+    </section>
+
+    <section class="kpis" aria-label="Ringkasan KPI">
+      <article class="panel kpi" style="--wash:#e9f1fb"><p class="kpi-label">Total toko unik</p><p id="kpiTotalStores" class="kpi-value">0</p></article>
+      <article class="panel kpi" style="--wash:#e5f3e9"><p class="kpi-label">Toko dengan Sunsilk tersedia</p><p id="kpiAvailableStores" class="kpi-value">0</p></article>
+      <article class="panel kpi" style="--wash:#e9f1fb"><p class="kpi-label">Total volume terjual</p><p id="kpiTotalSKUSold" class="kpi-value">0 <small>Pcs</small></p></article>
+      <article class="panel kpi" style="--wash:#fff0dd"><p class="kpi-label">Total omset</p><p id="kpiTotalRevenue" class="kpi-value">Rp 0</p></article>
+    </section>
+
+    <section class="charts" aria-label="Grafik performa">
+      <article class="panel chart-panel"><h3>Ketersediaan per distributor</h3><p>Jumlah toko unik dengan Sunsilk Hair Mask 60gr tersedia dan tidak tersedia.</p><div class="chart-wrap"><canvas id="chartAvailability" aria-label="Grafik ketersediaan Sunsilk per distributor"></canvas></div></article>
+      <article class="panel chart-panel"><h3>Komparasi harga</h3><p>Rata-rata harga Sunsilk dan kompetitor per pcs.</p><div class="chart-wrap"><canvas id="chartCompetitor" aria-label="Grafik perbandingan harga"></canvas></div></article>
+    </section>
+
+    <section class="rankings" aria-label="Peringkat BA dan BW">
+      <article class="panel rank-panel"><h3 class="rank-title top">↑ &nbsp;TOP 10 BA / BW · Penjualan tertinggi</h3><div class="table-scroll"><table><thead><tr><th>Rank</th><th>Username</th><th class="right">SKU terjual</th><th class="right">Total sales</th></tr></thead><tbody id="topBaBwBody"></tbody></table></div></article>
+      <article class="panel rank-panel"><h3 class="rank-title bottom">↓ &nbsp;BOTTOM 10 BA / BW · Penjualan terendah</h3><div class="table-scroll"><table><thead><tr><th>Rank</th><th>Username</th><th class="right">SKU terjual</th><th class="right">Total sales</th></tr></thead><tbody id="bottomBaBwBody"></tbody></table></div></article>
+    </section>
+
+    <section class="panel table-panel">
+      <div class="table-tools"><h3>Detail data toko</h3><input id="tableSearch" class="search" type="search" placeholder="Cari toko, username, distributor..." aria-label="Cari toko, username, atau distributor"></div>
+      <div class="table-scroll">
+        <table class="data-table"><thead><tr><th>BP Area</th><th>Distributor</th><th>Nama toko</th><th>Username BA / BW</th><th class="right">Sunsilk ready</th><th class="right">Harga Sunsilk</th><th class="right">Kompetitor ready</th><th class="right">Harga kompetitor</th><th class="right">Qty sold</th><th class="right">Total omset</th></tr></thead><tbody id="storeTableBody"></tbody></table>
+      </div>
+      <div class="pagination"><span id="pageInfo">Menampilkan 0 data</span><div class="page-buttons"><button id="btnPrev" type="button" aria-label="Halaman sebelumnya">‹</button><button id="btnNext" type="button" aria-label="Halaman berikutnya">›</button></div></div>
+    </section>
+  </main>
+  <footer>Dashboard analisis penjualan & ketersediaan Sunsilk</footer>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbzDfNwGjwoHq7q-Gd0qufBVPn_15ejPdwqClqiVbK15H7Cdg1VCMcwV_1jmdpePnSOyMQ/exec";
+    const rowsPerPage = 10;
+    let rawData = [];
+    let filteredData = [];
+    let currentPage = 1;
+    let availabilityChart;
+    let competitorChart;
+
+    const byId = id => document.getElementById(id);
+    const formatNumber = value => Number(value || 0).toLocaleString('id-ID');
+    const formatRupiah = value => `Rp ${formatNumber(value)}`;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      byId('refreshButton').addEventListener('click', loadSheetData);
+      byId('resetButton').addEventListener('click', resetFilters);
+      byId('tableSearch').addEventListener('input', () => { currentPage = 1; renderTable(); });
+      ['filterBpArea', 'filterDistributor', 'filterToko', 'filterUsername'].forEach(id => byId(id).addEventListener('change', applyFilters));
+      byId('btnPrev').addEventListener('click', () => changePage(-1));
+      byId('btnNext').addEventListener('click', () => changePage(1));
+      loadSheetData();
+    });
+
+    async function loadSheetData() {
+      setStatus('loading', 'Memuat data...');
+      byId('refreshButton').disabled = true;
+      try {
+        const response = await fetch(API_URL, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        if (!Array.isArray(data)) throw new Error('Format data tidak sesuai');
+        rawData = processRawData(data);
+        setStatus('connected', 'Data terhubung');
+      } catch (error) {
+        console.error('API Error:', error);
+        rawData = getSampleData();
+        setStatus('sample', 'Data contoh');
+      } finally {
+        byId('refreshButton').disabled = false;
+        byId('lastUpdated').textContent = `Diperbarui ${new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`;
+        populateFilters();
+        applyFilters();
+      }
+    }
+
+    function setStatus(state, message) {
+      const status = byId('dataStatus');
+      status.dataset.state = state;
+      status.lastElementChild.textContent = message;
+    }
+
+    function processRawData(data) {
+      return data.map(item => {
+        const keys = Object.keys(item);
+        const findVal = keywords => {
+          const key = keys.find(candidate => keywords.some(word => candidate.toLowerCase().includes(word.toLowerCase())));
+          return key ? item[key] : '';
+        };
+        const yesNo = (value, fallback = 'No') => {
+          const normalized = String(value ?? '').trim().toLowerCase();
+          return normalized ? (normalized.startsWith('y') || normalized === 'tersedia' ? 'Yes' : 'No') : fallback;
+        };
+        return {
+          bpArea: String(findVal(['BP AREA', 'BP Area', 'AREA']) || 'N/A').trim(),
+          distributor: String(findVal(['Kode DT', 'Nama DT', 'Distributor']) || 'N/A').trim(),
+          toko: String(findVal(['Kode Toko', 'Nama Toko', 'Toko']) || 'N/A').trim(),
+          username: String(findVal(['Username', 'FF Name', 'BA BW']) || 'N/A').trim(),
+          sunsilkReady: yesNo(findVal(['Apakah Sunsilk', 'Tersedia'])),
+          sunsilkPrice: toNumber(findVal(['Harga Jual Sunsilk', 'Per Pcs'])),
+          competitorReady: yesNo(findVal(['Competitor tersedia', 'Hair Mask Competitor'])),
+          competitorPrice: toNumber(findVal(['Harga Jual Hair Mask Competitor'])),
+          skuSold: toNumber(findVal(['Jumlah SKU Sunsilk', 'berhasil dijual'])),
+          totalRevenue: toNumber(findVal(['Total Penjualan SKU Sunsilk', 'Rupiah']))
+        };
+      });
+    }
+
+    function toNumber(value) {
+      if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+      let text = String(value ?? '').trim().replace(/[^\d,.-]/g, '');
+      if (!text) return 0;
+      if (text.includes(',') && text.includes('.')) {
+        text = text.lastIndexOf(',') > text.lastIndexOf('.') ? text.replace(/\./g, '').replace(',', '.') : text.replace(/,/g, '');
+      } else if (text.includes(',')) {
+        text = /,\d{1,2}$/.test(text) ? text.replace(',', '.') : text.replace(/,/g, '');
+      } else if (/\.\d{3}$/.test(text)) {
+        text = text.replace(/\./g, '');
+      }
+      const result = Number(text);
+      return Number.isFinite(result) ? result : 0;
+    }
+
+    function populateFilters() {
+      const fields = [['filterBpArea', 'bpArea', 'Semua area'], ['filterDistributor', 'distributor', 'Semua distributor'], ['filterToko', 'toko', 'Semua toko'], ['filterUsername', 'username', 'Semua username']];
+      fields.forEach(([id, key, placeholder]) => {
+        const select = byId(id);
+        const selected = select.value;
+        const values = [...new Set(rawData.map(item => item[key]).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'));
+        select.replaceChildren(new Option(placeholder, ''), ...values.map(value => new Option(value, value)));
+        select.value = values.includes(selected) ? selected : '';
+      });
+    }
+
+    function applyFilters() {
+      const [bp, distributor, toko, username] = ['filterBpArea', 'filterDistributor', 'filterToko', 'filterUsername'].map(id => byId(id).value);
+      filteredData = rawData.filter(item => (!bp || item.bpArea === bp) && (!distributor || item.distributor === distributor) && (!toko || item.toko === toko) && (!username || item.username === username));
+      currentPage = 1;
+      updateKPIs();
+      renderCharts();
+      renderTopBottom();
+      renderTable();
+    }
+
+    function resetFilters() {
+      ['filterBpArea', 'filterDistributor', 'filterToko', 'filterUsername'].forEach(id => { byId(id).value = ''; });
+      byId('tableSearch').value = '';
+      applyFilters();
+    }
+
+    function updateKPIs() {
+      byId('kpiTotalStores').textContent = formatNumber(new Set(filteredData.map(item => item.toko)).size);
+      byId('kpiAvailableStores').textContent = formatNumber(new Set(filteredData.filter(item => item.sunsilkReady === 'Yes').map(item => item.toko)).size);
+      byId('kpiTotalSKUSold').innerHTML = `${formatNumber(filteredData.reduce((sum, item) => sum + item.skuSold, 0))} <small>Pcs</small>`;
+      byId('kpiTotalRevenue').textContent = formatRupiah(filteredData.reduce((sum, item) => sum + item.totalRevenue, 0));
+    }
+
+    function renderCharts() {
+      const distributorMap = new Map();
+      filteredData.forEach(item => {
+        if (!distributorMap.has(item.distributor)) distributorMap.set(item.distributor, { yes: new Set(), no: new Set(), sunsilk: [], competitor: [] });
+        const group = distributorMap.get(item.distributor);
+        group[item.sunsilkReady === 'Yes' ? 'yes' : 'no'].add(item.toko);
+        if (item.sunsilkPrice > 0) group.sunsilk.push(item.sunsilkPrice);
+        if (item.competitorPrice > 0) group.competitor.push(item.competitorPrice);
+      });
+      const labels = [...distributorMap.keys()];
+      const average = values => values.length ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length) : null;
+      if (availabilityChart) availabilityChart.destroy();
+      availabilityChart = new Chart(byId('chartAvailability'), {
+        type: 'bar',
+        data: { labels, datasets: [
+          { label: 'Tersedia', data: labels.map(label => distributorMap.get(label).yes.size), backgroundColor: '#319b69', borderRadius: 3 },
+          { label: 'Tidak tersedia', data: labels.map(label => distributorMap.get(label).no.size), backgroundColor: '#d66c6e', borderRadius: 3 }
+        ] },
+        options: chartOptions(true)
+      });
+      if (competitorChart) competitorChart.destroy();
+      competitorChart = new Chart(byId('chartCompetitor'), {
+        type: 'line',
+        data: { labels, datasets: [
+          { label: 'Sunsilk', data: labels.map(label => average(distributorMap.get(label).sunsilk)), borderColor: '#16764d', backgroundColor: '#16764d', pointRadius: 3, tension: .25, spanGaps: true },
+          { label: 'Kompetitor', data: labels.map(label => average(distributorMap.get(label).competitor)), borderColor: '#e58b39', backgroundColor: '#e58b39', pointRadius: 3, tension: .25, spanGaps: true }
+        ] },
+        options: { ...chartOptions(false), scales: { ...chartOptions(false).scales, y: { ...chartOptions(false).scales.y, ticks: { callback: value => `Rp ${formatNumber(value)}` } } } }
+      });
+    }
+
+    function chartOptions(stacked) {
+      return {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 7, boxHeight: 7, padding: 16, font: { family: 'DM Sans', size: 10 } } } },
+        scales: {
+          x: { stacked, grid: { display: false }, ticks: { font: { family: 'DM Sans', size: 9 }, maxRotation: 35, minRotation: 0 } },
+          y: { stacked, beginAtZero: true, grid: { color: '#edf0ec' }, ticks: { precision: 0, font: { family: 'DM Sans', size: 9 } } }
+        }
+      };
+    }
+
+    function renderTopBottom() {
+      const users = new Map();
+      filteredData.forEach(item => {
+        if (!users.has(item.username)) users.set(item.username, { username: item.username, qty: 0, revenue: 0 });
+        const user = users.get(item.username);
+        user.qty += item.skuSold;
+        user.revenue += item.totalRevenue;
+      });
+      const sorted = [...users.values()].sort((a, b) => b.revenue - a.revenue);
+      renderRankRows(sorted.slice(0, 10), 'topBaBwBody');
+      renderRankRows(sorted.slice(-10).reverse(), 'bottomBaBwBody');
+    }
+
+    function renderRankRows(items, elementId) {
+      const body = byId(elementId);
+      body.replaceChildren();
+      if (!items.length) return addEmptyRow(body, 4, 'Tidak ada data');
+      items.forEach((item, index) => {
+        const row = document.createElement('tr');
+        [index + 1, item.username, `${formatNumber(item.qty)} Pcs`, formatRupiah(item.revenue)].forEach((value, cellIndex) => {
+          const cell = document.createElement('td');
+          cell.textContent = value;
+          if (cellIndex > 1) cell.className = 'right';
+          row.append(cell);
+        });
+        body.append(row);
+      });
+    }
+
+    function renderTable() {
+      const query = byId('tableSearch').value.trim().toLocaleLowerCase('id');
+      const searched = filteredData.filter(item => [item.toko, item.username, item.distributor, item.bpArea].some(value => value.toLocaleLowerCase('id').includes(query)));
+      const pageCount = Math.max(1, Math.ceil(searched.length / rowsPerPage));
+      currentPage = Math.min(currentPage, pageCount);
+      const start = (currentPage - 1) * rowsPerPage;
+      const pageData = searched.slice(start, start + rowsPerPage);
+      const body = byId('storeTableBody');
+      body.replaceChildren();
+      if (!pageData.length) addEmptyRow(body, 10, 'Data tidak ditemukan');
+      pageData.forEach(item => {
+        const row = document.createElement('tr');
+        const values = [item.bpArea, item.distributor, item.toko, item.username];
+        values.forEach(value => appendCell(row, value));
+        appendBadgeCell(row, item.sunsilkReady, item.sunsilkReady === 'Yes' ? 'yes' : 'no');
+        appendCell(row, formatRupiah(item.sunsilkPrice), 'right');
+        appendBadgeCell(row, item.competitorReady, item.competitorReady === 'Yes' ? 'competitor' : 'no');
+        appendCell(row, formatRupiah(item.competitorPrice), 'right');
+        appendCell(row, `${formatNumber(item.skuSold)} Pcs`, 'right');
+        appendCell(row, formatRupiah(item.totalRevenue), 'right');
+        body.append(row);
+      });
+      const shownStart = searched.length ? start + 1 : 0;
+      byId('pageInfo').textContent = `Menampilkan ${shownStart}–${Math.min(start + rowsPerPage, searched.length)} dari ${formatNumber(searched.length)} data`;
+      byId('btnPrev').disabled = currentPage <= 1;
+      byId('btnNext').disabled = currentPage >= pageCount;
+    }
+
+    function appendCell(row, value, className = '') {
+      const cell = document.createElement('td');
+      cell.textContent = value;
+      if (className) cell.className = className;
+      row.append(cell);
+    }
+
+    function appendBadgeCell(row, value, kind) {
+      const cell = document.createElement('td');
+      cell.className = 'right';
+      const badge = document.createElement('span');
+      badge.className = `badge ${kind}`;
+      badge.textContent = value;
+      cell.append(badge);
+      row.append(cell);
+    }
+
+    function addEmptyRow(body, columns, message) {
+      const row = document.createElement('tr');
+      const cell = document.createElement('td');
+      cell.colSpan = columns;
+      cell.className = 'empty';
+      cell.textContent = message;
+      row.append(cell);
+      body.append(row);
+    }
+
+    function changePage(direction) {
+      currentPage += direction;
+      renderTable();
+    }
+
+    function getSampleData() {
+      return [
+        { bpArea: 'AREA 1', distributor: 'DT JABODETABEK', toko: 'TOKO MAJU JAYA', username: 'BA_ANDI', sunsilkReady: 'Yes', sunsilkPrice: 15000, competitorReady: 'Yes', competitorPrice: 16500, skuSold: 45, totalRevenue: 675000 },
+        { bpArea: 'AREA 1', distributor: 'DT JABODETABEK', toko: 'TOKO BERKAH', username: 'BA_ANDI', sunsilkReady: 'Yes', sunsilkPrice: 15000, competitorReady: 'No', competitorPrice: 0, skuSold: 30, totalRevenue: 450000 },
+        { bpArea: 'AREA 2', distributor: 'DT JABAR', toko: 'TOKO SUKABUMI', username: 'BA_BUDI', sunsilkReady: 'No', sunsilkPrice: 0, competitorReady: 'Yes', competitorPrice: 16000, skuSold: 0, totalRevenue: 0 },
+        { bpArea: 'AREA 2', distributor: 'DT JABAR', toko: 'TOKO BANDUNG', username: 'BA_CITRA', sunsilkReady: 'Yes', sunsilkPrice: 15500, competitorReady: 'Yes', competitorPrice: 17000, skuSold: 80, totalRevenue: 1240000 }
+      ];
+    }
+  </script>
+</body>
+</html>
